@@ -2,7 +2,8 @@
 import "./App.css";
 
 function App() {
-  const [status, setStatus] = useState("роверяем соединение с сервером...");
+  const [apiStatus, setApiStatus] = useState("Проверяем API...");
+  const [dbStatus, setDbStatus] = useState("Проверяем PostgreSQL...");
 
   useEffect(() => {
     fetch("http://localhost:3001/api/status")
@@ -14,18 +15,38 @@ function App() {
         return response.json();
       })
       .then((data) => {
-        setStatus(data.message);
+        setApiStatus(data.message);
       })
       .catch((error) => {
         console.error(error);
-        setStatus("шибка соединения с Price Control V3 API");
+        setApiStatus("Ошибка соединения с API");
+      });
+
+    fetch("http://localhost:3001/api/db/status")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setDbStatus(
+          `PostgreSQL подключен: ${data.database}, порт ${data.port}`,
+        );
+      })
+      .catch((error) => {
+        console.error(error);
+        setDbStatus("Ошибка соединения с PostgreSQL");
       });
   }, []);
 
   return (
     <main>
       <h1>Price Control V3</h1>
-      <p>{status}</p>
+
+      <p>{apiStatus}</p>
+      <p>{dbStatus}</p>
     </main>
   );
 }

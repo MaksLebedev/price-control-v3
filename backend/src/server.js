@@ -1,6 +1,8 @@
 ﻿const express = require("express");
 const cors = require("cors");
 
+const { testDatabaseConnection } = require("./db");
+
 const app = express();
 
 const PORT = 3001;
@@ -15,6 +17,27 @@ app.get("/api/status", (req, res) => {
     service: "Price Control V3 API",
     message: "Price Control V3 API работает",
   });
+});
+
+app.get("/api/db/status", async (req, res) => {
+  try {
+    const info = await testDatabaseConnection();
+
+    res.json({
+      ok: true,
+      message: "PostgreSQL подключен",
+      database: info.database,
+      user: info.user,
+      port: info.port,
+    });
+  } catch (error) {
+    console.error("Ошибка подключения к PostgreSQL:", error);
+
+    res.status(500).json({
+      ok: false,
+      message: "Ошибка подключения к PostgreSQL",
+    });
+  }
 });
 
 app.listen(PORT, HOST, () => {
