@@ -3,10 +3,18 @@ const cors = require("cors");
 
 const { testDatabaseConnection } = require("./db");
 
+// ------------------------------------------------------------
+// РАБОТА С МАТЕРИАЛАМИ В POSTGRESQL
+//
+// Server.js принимает HTTP-запросы,
+// а непосредственную работу с таблицей materials
+// выполняет отдельный repository.
+// ------------------------------------------------------------
 const {
   getMaterials,
   createMaterial,
   updateMaterial,
+  deleteMaterial,
 } = require("./repositories/materials-repository");
 
 const app = express();
@@ -156,6 +164,65 @@ app.patch("/api/materials/:id", async (req, res) => {
     res.status(500).json({
       ok: false,
       message: "Ошибка изменения материала",
+    });
+  }
+});
+
+// ------------------------------------------------------------
+// DELETE /api/materials/:id
+//
+// Этот маршрут удаляет материал по его внутреннему ID.
+//
+// Например:
+//
+// DELETE /api/materials/15
+//
+// означает:
+// удалить из PostgreSQL материал с ID = 15.
+// ------------------------------------------------------------
+app.delete("/api/materials/:id", async (req, res) => {
+  try {
+    // ID приходит из адреса запроса как текст.
+    // Преобразуем его в число.
+    const id = Number(req.params.id);
+
+    // Проверяем, что пользователь передал нормальный ID.
+    //
+    // Например, значения "abc", "-5" или "0"
+    // не должны попадать в запрос PostgreSQL.
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Некорректный ID материала",
+      });
+    }
+
+    // Просим repository удалить материал из PostgreSQL.
+    const material = await deleteMaterial(id);
+
+    // Если PostgreSQL не вернул запись,
+    // значит материала с таким ID не существовало.
+    if (!material) {
+      return res.status(404).json({
+        ok: false,
+        message: "Материал не найден",
+      });
+    }
+
+    // Сообщаем React, что удаление прошло успешно.
+    res.json({
+      ok: true,
+      message: "Материал удалён",
+      material,
+    });
+  } catch (error) {
+    // Если произошла неожиданная ошибка,
+    // записываем техническую информацию в консоль backend.
+    console.error("Ошибка удаления материала:", error);
+
+    res.status(500).json({
+      ok: false,
+      message: "Ошибка удаления материала",
     });
   }
 });
