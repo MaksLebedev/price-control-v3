@@ -28,3 +28,6 @@ backups/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Локальные диагностические отчёты импорта и анализа
+backend/reports/
